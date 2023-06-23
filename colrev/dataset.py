@@ -11,6 +11,7 @@ import time
 import typing
 from copy import deepcopy
 from pathlib import Path
+from random import randint
 from typing import Optional
 from typing import TYPE_CHECKING
 
@@ -481,6 +482,8 @@ class Dataset:
 
         parser = bibtex.Parser()
         if load_str:
+            # Fix missing comma after fields
+            load_str = re.sub(r"(.)}\n", r"\g<1>},\n", load_str)
             bib_data = parser.parse_string(load_str)
             records_dict = self.parse_records_dict(records_dict=bib_data.entries)
 
@@ -547,6 +550,9 @@ class Dataset:
                 "number",
                 "pages",
                 "editor",
+                "publisher",
+                "url",
+                "abstract",
             ]
 
             record = colrev.record.Record(data=record_dict)
@@ -560,11 +566,11 @@ class Dataset:
                         ordered_field, record_dict[ordered_field]
                     )
 
-            for key, value in record_dict.items():
+            for key in sorted(record_dict.keys()):
                 if key in field_order + ["ID", "ENTRYTYPE"]:
                     continue
 
-                bibtex_str += format_field(key, value)
+                bibtex_str += format_field(key, record_dict[key])
 
             bibtex_str += ",\n}\n"
 
@@ -972,7 +978,7 @@ class Dataset:
             path = path.relative_to(self.review_manager.path)
 
         while (self.review_manager.path / Path(".git/index.lock")).is_file():
-            time.sleep(0.5)
+            time.sleep(randint(1, 50) * 0.1)  # nosec
             print("Waiting for previous git operation to complete")
 
         try:
@@ -1044,14 +1050,14 @@ class Dataset:
     def add_record_changes(self) -> None:
         """Add changes in records to git"""
         while (self.review_manager.path / Path(".git/index.lock")).is_file():
-            time.sleep(0.5)
+            time.sleep(randint(1, 50) * 0.1)  # nosec
             print("Waiting for previous git operation to complete")
         self.__git_repo.index.add([str(self.RECORDS_FILE_RELATIVE)])
 
     def add_setting_changes(self) -> None:
         """Add changes in settings to git"""
         while (self.review_manager.path / Path(".git/index.lock")).is_file():
-            time.sleep(0.5)
+            time.sleep(randint(1, 50) * 0.1)  # nosec
             print("Waiting for previous git operation to complete")
 
         self.__git_repo.index.add([str(self.review_manager.SETTINGS_RELATIVE)])

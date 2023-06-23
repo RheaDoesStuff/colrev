@@ -172,8 +172,8 @@ class CrossrefSearchSource(JsonSchemaMixin):
     def query_doi(cls, *, doi: str, etiquette: Etiquette) -> colrev.record.PrepRecord:
         """Get records from Crossref based on a doi query"""
 
-        works = Works(etiquette=etiquette)
         try:
+            works = Works(etiquette=etiquette)
             crossref_query_return = works.doi(doi)
             if crossref_query_return is None:
                 raise colrev_exceptions.RecordNotFoundInPrepSourceException(
@@ -364,7 +364,7 @@ class CrossrefSearchSource(JsonSchemaMixin):
         ):
             return []
 
-        return data["message"]["items"]
+        return data["message"].get("items", [])
 
     def crossref_query(
         self,
@@ -533,6 +533,7 @@ class CrossrefSearchSource(JsonSchemaMixin):
             OSError,
             IndexError,
             colrev_exceptions.RecordNotFoundInPrepSourceException,
+            colrev_exceptions.RecordNotParsableException,
         ) as exc:
             if prep_operation.review_manager.verbose_mode:
                 print(exc)
@@ -565,6 +566,7 @@ class CrossrefSearchSource(JsonSchemaMixin):
             OSError,
             IndexError,
             colrev_exceptions.RecordNotFoundInPrepSourceException,
+            colrev_exceptions.RecordNotParsableException,
         ):
             pass
 
@@ -701,6 +703,7 @@ class CrossrefSearchSource(JsonSchemaMixin):
         *,
         search_operation: colrev.ops.search.Search,
         crossref_feed: colrev.ops.search.GeneralOriginFeed,
+        rerun: bool,
     ) -> None:
         records = search_operation.review_manager.dataset.load_records_dict()
 
@@ -722,6 +725,8 @@ class CrossrefSearchSource(JsonSchemaMixin):
             ):
                 continue
 
+            self.__prep_crossref_record(record=retrieved_record, prep_main_record=False)
+
             prev_record_dict_version = {}
             if retrieved_record.data["ID"] in crossref_feed.feed_records:
                 prev_record_dict_version = crossref_feed.feed_records[
@@ -736,7 +741,7 @@ class CrossrefSearchSource(JsonSchemaMixin):
                 record_dict=retrieved_record.data,
                 prev_record_dict_version=prev_record_dict_version,
                 source=self.search_source,
-                update_time_variant_fields=True,
+                update_time_variant_fields=rerun,
             )
             if changed:
                 crossref_feed.nr_changed += 1
@@ -840,6 +845,7 @@ class CrossrefSearchSource(JsonSchemaMixin):
                 self.__run_md_search_update(
                     search_operation=search_operation,
                     crossref_feed=crossref_feed,
+                    rerun=rerun,
                 )
 
             else:
@@ -896,10 +902,10 @@ class CrossrefSearchSource(JsonSchemaMixin):
             )
             return add_source
 
-        if query.startswith("jissn="):
-            query = query.replace("jissn=", "")
+        if query.startswith("issn="):
+            query = query.replace("issn=", "")
             filename = search_operation.get_unique_filename(
-                file_path_string=f"crossref_jissn_{query}"
+                file_path_string=f"crossref_issn_{query}"
             )
             add_source = colrev.settings.SearchSource(
                 endpoint="colrev.crossref",

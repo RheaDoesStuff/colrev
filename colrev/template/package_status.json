@@ -157,6 +157,10 @@
         {
             "package_endpoint_identifier": "colrev.trid",
             "status": "EXPERIMENTAL"
+        },
+        {
+            "package_endpoint_identifier": "colrev.open_alex",
+            "status": "EXPERIMENTAL"
         }
     ],
     "load_conversion": [
@@ -182,6 +186,10 @@
         },
         {
             "package_endpoint_identifier": "colrev.bibutils",
+            "status": "MATURING"
+        },
+        {
+            "package_endpoint_identifier": "colrev.rispy",
             "status": "MATURING"
         }
     ],
@@ -273,6 +281,10 @@
         {
             "package_endpoint_identifier": "colrev.curation_prep",
             "status": "EXPERIMENTAL"
+        },
+        {
+            "package_endpoint_identifier": "colrev.open_alex_prep",
+            "status": "RED"
         }
     ],
     "prep_man": [
